@@ -1,0 +1,19 @@
+{
+	"debugger_configurations":
+	[
+		{
+			"type": "gdb",
+			"request": "launch",
+			"name": "Launch Program",
+			"target": "./build/linux/None/debug/main",
+			"cwd": "${folder}",
+			"valuesFormatting": "parseText"
+		},
+	],
+	"folders":
+	[
+		{
+			"path": "/home/song/Desktop/calculator"
+		}
+	]
+}
