@@ -5,6 +5,7 @@
 #include <ostream>
 #include <string>
 #include <stack>
+#include <loguru.hpp>
 
 // operator
 class _operator_
@@ -49,7 +50,7 @@ public:
             default:
                 mLevel = -1;
                 mFlag  = -1;
-                std::cout << "Not suggort!" << std::endl;
+                LOG_F( ERROR, "Not supported!" );
                 break;
         }
     }
@@ -101,6 +102,8 @@ public:
         return func_tab[mFlag]( num1, num2 );
     }
 
+    static bool isoperator( char cc );
+
 private:
     static double _do_add( double num1, double num2 ) { return num2 + num1; }
     static double _do_sub( double num1, double num2 ) { return num2 - num1; }
@@ -121,7 +124,7 @@ private:
 class calculator
 {
 public:
-    calculator() = default;
+    calculator()  = default;
     ~calculator() = default;
 
 public:
@@ -138,7 +141,12 @@ public:
     //  func: to_suffix
     //  desc: to the suffix expression
     //
-    std::string to_suffix( std::string line );
+    static std::string to_suffix( std::string line );
+
+    //  func: preprocessor
+    //  desc: preprocess line (delete space or check is dight or operator)
+    //
+    static std::string preprocessor( std::string line );
 };
 
 #endif

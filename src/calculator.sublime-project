@@ -7,13 +7,23 @@
 			"name": "Launch Program",
 			"target": "./build/linux/None/debug/main",
 			"cwd": "${folder}",
-			"valuesFormatting": "parseText"
+			"valuesFormatting": "parseText",
 		},
 	],
 	"folders":
 	[
 		{
-			"path": "/home/song/Desktop/calculator"
+			"path": "/home/song/Desktop/calculator",
 		}
-	]
+	],
+	"settings":
+	{
+		"LSP":
+		{
+			"clangd":
+			{
+				"enabled": true,
+			},
+		},
+	},
 }
