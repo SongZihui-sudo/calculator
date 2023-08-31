@@ -48,7 +48,7 @@ void calculator::repl()
             break;
         }
         LOG_F( WARNING, "suffix: %s", str.c_str() );
-        LOG_F( INFO, "%f", run( str ) );
+        run( str );
         std::cout << "$: ";
     }
 }
@@ -190,13 +190,12 @@ double calculator::run( std::string line )
     line          = to_suffix( line );
     double result = 0;
     std::string tmp;
-    std::stack< int > nums;
-    std::stack< _operator_ > operators;
+    std::stack< double > nums;
     for ( int i = 0; i < line.size(); i++ )
     {
         if ( std::isdigit( line[i] ) )
         {
-            tmp += std::to_string( line[i] );
+            tmp += line[i];
         }
         else if ( line[i] == '\\' )
         {
@@ -210,14 +209,12 @@ double calculator::run( std::string line )
             nums.pop();
             int num_left = nums.top();
             nums.pop();
-            double result_tmp;
-            if ( !operators.empty() )
-            {
-                result_tmp = _operator_( operators.top() )._do_( num_right, num_left );
-                operators.pop();
-            }
-            operators.push( _operator_( line[i] ) );
+            _operator_ cur(line[i]);
+            double result_tmp =  cur._do_( num_right, num_left );
+            nums.push(result_tmp);
         }
     }
+    result = nums.top();
+    LOG_F(INFO,"result: %f", result);
     return result;
 }
