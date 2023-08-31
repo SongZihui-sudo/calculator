@@ -23,30 +23,22 @@ public:
         mName = cc;
         switch ( cc )
         {
-            case '+':
-                mLevel = 1;
-                mFlag  = 0;
-                break;
-            case '-':
-                mLevel = 1;
-                mFlag  = 1;
-                break;
-            case '*':
-                mLevel = 2;
-                mFlag  = 2;
-                break;
-            case '/':
-                mLevel = 2;
-                mFlag  = 3;
-                break;
-            case '(':
-                mLevel = 0;
-                mFlag  = 4;
-                break;
-            case ')':
-                mLevel = 0;
-                mFlag  = 5;
-                break;
+#define xx( cc, level, flag )                                                              \
+    case cc:                                                                               \
+        mLevel = level;                                                                    \
+        mFlag  = flag;                                                                     \
+        break;
+            xx( '+', 1, 0 );
+            xx( '-', 1, 1 );
+            xx( '*', 2, 2 );
+            xx( '/', 2, 3 );
+            xx( '(', 0, 4 );
+            xx( ')', 0, 5 );
+            xx( '[', 0, 6 );
+            xx( ']', 0, 7 );
+            xx( '{', 0, 8 );
+            xx( '}', 0, 9 );
+#undef xx
             default:
                 mLevel = -1;
                 mFlag  = -1;
@@ -70,32 +62,21 @@ public:
 
     char get_name() { return mName; }
 
-    bool operator<( _operator_ oper )
-    {
-        if ( mLevel < oper.mLevel )
-        {
-            return true;
-        }
-        return false;
+#define xx( flag )                                                                         \
+    bool operator flag( _operator_ oper )                                                  \
+    {                                                                                      \
+        if ( mLevel flag oper.mLevel )                                                     \
+        {                                                                                  \
+            return true;                                                                   \
+        }                                                                                  \
+        return false;                                                                      \
     }
-
-    bool operator>( _operator_ oper )
-    {
-        if ( mLevel > oper.mLevel )
-        {
-            return true;
-        }
-        return false;
-    }
-
-    bool operator==( _operator_ oper )
-    {
-        if ( mLevel == oper.mLevel )
-        {
-            return true;
-        }
-        return false;
-    }
+    xx( <= );
+    xx( < );
+    xx( > );
+    xx( >= );
+    xx( == );
+#undef xx
 
     virtual double _do_( double num1, double num2 )
     {

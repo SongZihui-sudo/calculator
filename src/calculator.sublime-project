@@ -5,7 +5,7 @@
 			"type": "gdb",
 			"request": "launch",
 			"name": "Launch Program",
-			"target": "./build/linux/None/debug/main",
+			"target": "./build/linux/None/debug/test1",
 			"cwd": "${folder}",
 			"valuesFormatting": "parseText",
 		},

@@ -13,32 +13,24 @@ bool _operator_::isoperator( char cc )
     bool flag;
     switch ( cc )
     {
-        case '+':
-            flag = true;
-            break;
-        case '-':
-            flag = true;
-
-            break;
-        case '*':
-            flag = true;
-
-            break;
-        case '/':
-            flag = true;
-
-            break;
-        case '(':
-            flag = true;
-
-            break;
-        case ')':
-            flag = true;
-
-            break;
+#define xx( cc, val )                                                                      \
+    case cc:                                                                               \
+        flag = val;                                                                        \
+        break;
+        xx( '+', true );
+        xx( '-', true );
+        xx( '*', true );
+        xx( '/', true );
+        xx( ')', true );
+        xx( '(', true );
+        xx( ']', true );
+        xx( '[', true );
+        xx( '}', true );
+        xx( '{', true );
+#undef xx
         default:
             flag = false;
-            LOG_F( ERROR, "Not supported!" );
+            LOG_F( ERROR, "Unknown character: %c", cc );
             break;
     }
     return flag;
@@ -50,13 +42,11 @@ void calculator::repl()
     std::cout << "$: ";
     while ( std::getline( std::cin, str ) )
     {
-        if ( str == "quit" )
+        if ( str == "quit" || str == "exit" )
         {
-            LOG_F(INFO, "quiting!");
+            LOG_F( INFO, "quiting!" );
             break;
         }
-        str = preprocessor( str );
-        str = to_suffix( str );
         LOG_F( WARNING, "suffix: %s", str.c_str() );
         LOG_F( INFO, "%f", run( str ) );
         std::cout << "$: ";
@@ -65,70 +55,118 @@ void calculator::repl()
 
 std::string calculator::to_suffix( std::string line )
 {
+    line = preprocessor( line );
     std::string result;
+    std::string buffer;
     std::stack< _operator_ > ss;
     for ( size_t i = 0; i < line.size(); i++ )
     {
         char cc = line[i];
-        if ( !std::isdigit( line[i] ) )
+        if ( line[i] == '\\' )
+        {
+            result += buffer;
+            buffer.clear();
+        }
+        else if ( !std::isdigit( line[i] ) )
         {
             _operator_ cur( line[i] );
-            if ( cur.get_name() == ')' )
+            if ( !ss.empty() && ss.top() < cur )
             {
-                while ( ss.top().get_name() == '(' && !ss.empty() )
+                while ( !ss.empty() && ss.top() < cur )
                 {
-                    cc = ss.top().get_name();
+                    result += ss.top().get_name();
                     ss.pop();
                 }
-                if ( ss.empty() )
-                {
-                    LOG_F( ERROR, "The brackets do not match!" );
-                    result = "";
-                    return result;
-                }
+                ss.push( cur );
             }
-            else if ( !ss.empty() && cur > ss.top() )
-            {
-                cc = ss.top().get_name();
-                ss.pop();
-            }
+#define xx( right, left )                                                                  \
+    else if ( line[i] == right )                                                           \
+    {                                                                                      \
+        while ( !ss.empty() && ss.top() == left )                                          \
+        {                                                                                  \
+            result += ss.top().get_name();                                                 \
+            ss.pop();                                                                      \
+        }                                                                                  \
+    }
+            xx( ')', '(' ) xx( ']', '[' ) xx( '}', '{' )
+#undef xx
             else
             {
                 ss.push( cur );
-                continue;
             }
         }
-        result += cc;
+        else
+        {
+            buffer += cc;
+        }
     }
-    while ( !ss.empty() )
-    {
-        result += ss.top().get_name();
-        ss.pop();
-    }
+    LOG_F( WARNING, "str: %s", result.c_str() );
     return result;
 }
 
 std::string calculator::preprocessor( std::string line )
 {
+    bool operator_flag  = false;
+    size_t num_dight    = 0;
+    size_t num_operator = 0;
+    std::string buffer;
     std::string result;
     for ( int i = 0; i < line.size(); i++ )
     {
-        if ( line[i] != ' ' && ( std::isdigit( line[i]) || _operator_::isoperator( line[i] ) ) )
+        if ( std::isdigit( line[i] ) )
         {
+            operator_flag = false;
+            buffer += line[i];
+        }
+        else if ( _operator_::isoperator( line[i] ) )
+        {
+            if ( !buffer.empty() )
+            {
+                operator_flag = false;
+                buffer += '\\';
+                result += buffer;
+                buffer.clear();
+                num_dight++;
+            }
+            if ( line[i] == '-' || line[i] == '+' || line[i] == '*' || line[i] == '/' )
+            {
+                if ( operator_flag )
+                {
+                    LOG_F( ERROR,
+                           "A continuous add or subtract, multiply, divide operator! %s",
+                           line.c_str() );
+                    return std::string( "" );
+                }
+                else
+                {
+                    operator_flag = true;
+                    num_operator++;
+                }
+            }
             result += line[i];
+        }
+        else if ( line[i] == ' ' )
+        {
+            continue;
         }
         else
         {
-            LOG_F( ERROR, "Unknown character: %c", line[i] );
-            result = "";
-            return result;
+            LOG_F( ERROR, "Unknown character : %c", line[i] );
+            return std::string( "" );
         }
+    }
+    if ( !buffer.empty() )
+    {
+        buffer += '\\';
+        result += buffer;
+        num_dight++;
     }
     return result;
 }
 
 double calculator::run( std::string line )
 {
+    line          = to_suffix( line );
     double result = 0;
     std::string tmp;
     std::stack< int > nums;
@@ -139,10 +177,14 @@ double calculator::run( std::string line )
         {
             tmp += std::to_string( line[i] );
         }
-        else
+        else if ( line[i] == '\\' )
         {
             int cur = std::stoi( tmp );
             nums.push( cur );
+            tmp.clear();
+        }
+        else
+        {
             int num_right = nums.top();
             nums.pop();
             int num_left = nums.top();
