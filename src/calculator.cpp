@@ -30,7 +30,7 @@ bool _operator_::isoperator( char cc )
 #undef xx
         default:
             flag = false;
-            LOG_F( ERROR, "Unknown character: %c", cc );
+            LOG_F( WARNING, "Unknown character: %c", cc );
             break;
     }
     return flag;
@@ -62,22 +62,37 @@ std::string calculator::to_suffix( std::string line )
     for ( size_t i = 0; i < line.size(); i++ )
     {
         char cc = line[i];
-        if ( line[i] == '\\' )
+        if ( cc == '\\' )
         {
+            buffer += '\\';
             result += buffer;
             buffer.clear();
         }
         else if ( !std::isdigit( line[i] ) )
         {
             _operator_ cur( line[i] );
-            if ( !ss.empty() && ss.top() < cur )
+
+#define xx( flag )                                                                                          \
+    while ( !ss.empty() && ss.top() flag cur                                                                \
+            && ( ss.top().get_name() != '(' && ss.top().get_name() != '[' && ss.top().get_name() != '{' ) ) \
+    {                                                                                                       \
+        result += ss.top().get_name();                                                                      \
+        ss.pop();                                                                                           \
+    }                                                                                                       \
+    ss.push( cur );
+
+            if ( cc == '*' || cc == '/' )
             {
-                while ( !ss.empty() && ss.top() < cur )
-                {
-                    result += ss.top().get_name();
-                    ss.pop();
-                }
-                ss.push( cur );
+                xx( <= );
+            }
+            else if ( cc == '+' || cc == '-' )
+            {
+                xx( >= );
+            }
+#undef xx
+            else if ( line[i] == '(' || line[i] == '[' || line[i] == '{' )
+            {
+                continue;
             }
 #define xx( right, left )                                                                  \
     else if ( line[i] == right )                                                           \
@@ -100,7 +115,12 @@ std::string calculator::to_suffix( std::string line )
             buffer += cc;
         }
     }
-    LOG_F( WARNING, "str: %s", result.c_str() );
+    while ( !ss.empty() )
+    {
+        result += ss.top().get_name();
+        ss.pop();
+    }
+    LOG_F( INFO, "suffix str: %s", result.c_str() );
     return result;
 }
 
@@ -151,7 +171,7 @@ std::string calculator::preprocessor( std::string line )
         }
         else
         {
-            LOG_F( ERROR, "Unknown character : %c", line[i] );
+            LOG_F( WARNING, "Unknown character : %c", line[i] );
             return std::string( "" );
         }
     }
@@ -161,6 +181,7 @@ std::string calculator::preprocessor( std::string line )
         result += buffer;
         num_dight++;
     }
+    LOG_F( INFO, "After preproces: %s", result.c_str() );
     return result;
 }
 
