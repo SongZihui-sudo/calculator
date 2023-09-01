@@ -1,12 +1,18 @@
 #include "./calculator.h"
+#include "global.h"
+#include "type.h"
+#include <bits/types/struct_tm.h>
 #include <cctype>
 #include <clocale>
 #include <cstddef>
 #include <cstdio>
+#include <ios>
 #include <string>
 #include <stack>
 #include <type_traits>
 #include <iostream>
+
+global_state gl_State;
 
 bool _operator_::isoperator( char cc )
 {
@@ -23,10 +29,6 @@ bool _operator_::isoperator( char cc )
         xx( '/', true );
         xx( ')', true );
         xx( '(', true );
-        xx( ']', true );
-        xx( '[', true );
-        xx( '}', true );
-        xx( '{', true );
 #undef xx
         default:
             flag = false;
@@ -48,7 +50,7 @@ void calculator::repl()
             break;
         }
         LOG_F( WARNING, "suffix: %s", str.c_str() );
-        run( str );
+        run<double>( str );
         std::cout << "$: ";
     }
 }
@@ -71,40 +73,26 @@ std::string calculator::to_suffix( std::string line )
         else if ( !std::isdigit( line[i] ) )
         {
             _operator_ cur( line[i] );
-
-#define xx( flag )                                                                                          \
-    while ( !ss.empty() && ss.top() flag cur                                                                \
-            && ( ss.top().get_name() != '(' && ss.top().get_name() != '[' && ss.top().get_name() != '{' ) ) \
-    {                                                                                                       \
-        result += ss.top().get_name();                                                                      \
-        ss.pop();                                                                                           \
-    }                                                                                                       \
-    ss.push( cur );
-
-            if ( cc == '*' || cc == '/' )
+            if ( cc == '*' || cc == '/' || cc == '+' || cc == '-' )
             {
-                xx( <= );
+                while ( !ss.empty() && ss.top() >= cur
+                        && ( ss.top().get_name() != '(' && ss.top().get_name() != '['
+                             && ss.top().get_name() != '{' ) )
+                {
+                    result += ss.top().get_name();
+                    ss.pop();
+                }
+                ss.push( cur );
             }
-            else if ( cc == '+' || cc == '-' )
+            else if ( line[i] == ')' )
             {
-                xx( >= );
+                while ( !ss.empty() && ss.top() != '(' )
+                {
+                    result += ss.top().get_name();
+                    ss.pop();
+                }
+                ss.pop();
             }
-#undef xx
-            else if ( line[i] == '(' || line[i] == '[' || line[i] == '{' )
-            {
-                continue;
-            }
-#define xx( right, left )                                                                  \
-    else if ( line[i] == right )                                                           \
-    {                                                                                      \
-        while ( !ss.empty() && ss.top() == left )                                          \
-        {                                                                                  \
-            result += ss.top().get_name();                                                 \
-            ss.pop();                                                                      \
-        }                                                                                  \
-    }
-            xx( ')', '(' ) xx( ']', '[' ) xx( '}', '{' )
-#undef xx
             else
             {
                 ss.push( cur );
@@ -133,7 +121,7 @@ std::string calculator::preprocessor( std::string line )
     std::string result;
     for ( int i = 0; i < line.size(); i++ )
     {
-        if ( std::isdigit( line[i] ) )
+        if ( std::isdigit( line[i] ) || std::isalpha( line[i] ) )
         {
             operator_flag = false;
             buffer += line[i];
@@ -165,14 +153,9 @@ std::string calculator::preprocessor( std::string line )
             }
             result += line[i];
         }
-        else if ( line[i] == ' ' )
-        {
-            continue;
-        }
         else
         {
-            LOG_F( WARNING, "Unknown character : %c", line[i] );
-            return std::string( "" );
+            continue;
         }
     }
     if ( !buffer.empty() )
@@ -185,12 +168,13 @@ std::string calculator::preprocessor( std::string line )
     return result;
 }
 
-double calculator::run( std::string line )
+template<class T>
+T calculator::run( std::string line )
 {
     line          = to_suffix( line );
-    double result = 0;
+    T result = 0;
     std::string tmp;
-    std::stack< double > nums;
+    std::stack< type > nums;
     for ( int i = 0; i < line.size(); i++ )
     {
         if ( std::isdigit( line[i] ) )
@@ -199,22 +183,31 @@ double calculator::run( std::string line )
         }
         else if ( line[i] == '\\' )
         {
-            int cur = std::stoi( tmp );
-            nums.push( cur );
-            tmp.clear();
+            if ( var::isnumber( tmp ) )
+            {
+                type cur(std::stod(tmp));
+                nums.push( cur );
+                tmp.clear();
+            }
+            else
+            {
+                type cur = gl_State.get_var_value(std_tosstring(tmp));
+                nums.push(cur);
+                tmp.clear();
+            }
         }
         else
         {
-            int num_right = nums.top();
+            type num_right = nums.top();
             nums.pop();
-            int num_left = nums.top();
+            type num_left = nums.top();
             nums.pop();
-            _operator_ cur(line[i]);
-            double result_tmp =  cur._do_( num_right, num_left );
-            nums.push(result_tmp);
+            _operator_ cur( line[i] );
+            T result_tmp = cur._do_( num_right.get_value<T>(), num_left.get_value<T>() );
+            nums.push( type(result_tmp) );
         }
     }
-    result = nums.top();
-    LOG_F(INFO,"result: %f", result);
+    result = nums.top().get_value<T>();
+    LOG_F( INFO, "result: %f", result );
     return result;
 }

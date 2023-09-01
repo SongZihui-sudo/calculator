@@ -6,6 +6,7 @@
 #include <string>
 #include <stack>
 #include <loguru.hpp>
+#include "./global.h"
 
 // operator
 class _operator_
@@ -34,10 +35,6 @@ public:
             xx( '/', 2, 3 );
             xx( '(', 0, 4 );
             xx( ')', 0, 5 );
-            xx( '[', 0, 6 );
-            xx( ']', 0, 7 );
-            xx( '{', 0, 8 );
-            xx( '}', 0, 9 );
 #undef xx
             default:
                 mLevel = -1;
@@ -76,6 +73,7 @@ public:
     xx( > );
     xx( >= );
     xx( == );
+    xx( != );
 #undef xx
 
     virtual double _do_( double num1, double num2 )
@@ -117,7 +115,8 @@ public:
     //  func: run
     //  desc: calculate explession
     //
-    double run( std::string line );
+    template<class T>
+    T run( std::string line );
 
     //  func: to_suffix
     //  desc: to the suffix expression
