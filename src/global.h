@@ -11,31 +11,41 @@
 class global_table
 {
 public:
-	global_table() {};
-	~global_table() = default;
+    global_table(){};
+    ~global_table() = default;
 
 public:
-	int join_var(sstring _name, type _type);
+    template< class T >
+    void join_var( sstring _name, T _val )
+    {
+        mVars.join( _name, _val );
+    }
 
-	int join_string(const char* str);
+    void join_string( const char* str );
 
-	type get_var_value(sstring name);
+    template< class T >
+    T get_var_value( sstring name )
+    {
+        return mVars.get( name ).get_value< T >();
+    }
 
-	int str(char* buf);
+    template< class T >
+    int replace_var_value( sstring _name, T _val )
+    {
+        return mVars.replace_value( _name, _val );
+    }
+    
+    int del_str( sstring str );
 
-	int replace_var_value(sstring _name, type _type);
+    int del_var( sstring name );
 
-	int replace_str(sstring old_str, sstring new_str);
+    bool isstring( sstring str );
 
-	int del_str(sstring str);
-
-	int del_var(sstring name);
-
-	bool isvar(sstring name);
+    bool isvar( sstring name );
 
 private:
-	global_var mVars;
-	global_string mStrings;
+    global_var mVars;
+    global_string mStrings;
 };
 
 #endif

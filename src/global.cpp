@@ -1,19 +1,12 @@
 #include "./global.h"
+#include "sstring.h"
 
-int global_table::join_var( sstring _name, type _type ) {}
+void global_table::join_string( const char* str ) { mStrings.join(sstring(str)); }
 
-int global_table::join_string( const char* str ) {}
+int global_table::del_str( sstring str ) { return mStrings.del(str); }
 
-type global_table::get_var_value( sstring name ) {}
+int global_table::del_var( sstring name ) { mVars.del( name ); }
 
-int global_table::str( char* buf ) {}
+bool global_table::isstring( sstring str ) { return mStrings.isin(str);  }
 
-int global_table::replace_var_value( sstring _name, type _type ) {}
-
-int global_table::replace_str( sstring old_str, sstring new_str ) {}
-
-int global_table::del_str( sstring str ) {}
-
-int global_table::del_var( sstring name ) {}
-
-bool global_table::isvar( sstring name ) {}
+bool global_table::isvar( sstring name ) { return mVars.isin(name); }

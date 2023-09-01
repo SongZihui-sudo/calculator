@@ -1,5 +1,6 @@
 #include "./calculator.h"
 #include "global.h"
+#include "sstring.h"
 #include "type.h"
 #include <bits/types/struct_tm.h>
 #include <cctype>
@@ -50,7 +51,7 @@ void calculator::repl()
             break;
         }
         LOG_F( WARNING, "suffix: %s", str.c_str() );
-        run<double>( str );
+        run< double >( str );
         std::cout << "$: ";
     }
 }
@@ -168,13 +169,13 @@ std::string calculator::preprocessor( std::string line )
     return result;
 }
 
-template<class T>
+template< class T >
 T calculator::run( std::string line )
 {
-    line          = to_suffix( line );
+    line     = to_suffix( line );
     T result = 0;
     std::string tmp;
-    std::stack< type > nums;
+    std::stack< T > nums;
     for ( int i = 0; i < line.size(); i++ )
     {
         if ( std::isdigit( line[i] ) )
@@ -185,29 +186,32 @@ T calculator::run( std::string line )
         {
             if ( var::isnumber( tmp ) )
             {
-                type cur(std::stod(tmp));
-                nums.push( cur );
+                nums.push( std::stod( tmp ) );
                 tmp.clear();
             }
             else
             {
-                type cur = gl_State.get_var_value(std_tosstring(tmp));
-                nums.push(cur);
+                if ( !gl_State.isvar( std_tosstring( tmp ) ) )
+                {
+                    return T( 0 );
+                }
+                T cur = gl_State.get_var_value< double >( std_tosstring( tmp ) );
+                nums.push( cur );
                 tmp.clear();
             }
         }
         else
         {
-            type num_right = nums.top();
+            T num_right = nums.top();
             nums.pop();
-            type num_left = nums.top();
+            T num_left = nums.top();
             nums.pop();
             _operator_ cur( line[i] );
-            T result_tmp = cur._do_( num_right.get_value<T>(), num_left.get_value<T>() );
-            nums.push( type(result_tmp) );
+            T result_tmp = cur._do_( num_right, num_left );
+            nums.push( result_tmp );
         }
     }
-    result = nums.top().get_value<T>();
+    result = nums.top();
     LOG_F( INFO, "result: %f", result );
     return result;
 }
