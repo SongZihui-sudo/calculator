@@ -71,14 +71,12 @@ struct type
         {
             value.val_int = val;
         }
-#define xx(t1)  \
-                else if constexpr ( std::is_same< T, t1 >::value )  \
-        {   \
-            value.val_##t1 = val; \
-        }
-        xx(double)
-        xx(uint)
-        xx(sstring)
+#define xx( t1 )                                                                           \
+    else if constexpr ( std::is_same< T, t1 >::value )                                     \
+    {                                                                                      \
+        value.val_##t1 = val;                                                              \
+    }
+        xx( double ) xx( unsigned int ) xx( sstring )
 #undef xx
         else
         {
@@ -91,7 +89,7 @@ struct type
     {
         int val_int;
         double val_double;
-        uint val_uint;
+        unsigned int val_uint;
         sstring val_sstring;
     } value;
 };
@@ -166,7 +164,7 @@ public:
 
     int del( sstring name );
 
-    bool isin(sstring name);
+    bool isin( sstring name );
 
 private:
     std::map< sstring, var > mTab;

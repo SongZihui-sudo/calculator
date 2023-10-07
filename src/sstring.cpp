@@ -8,6 +8,7 @@ size_t sstring_table::hash( sstring str )
     size_t index;
     std::hash< std::string > hash;
     index = hash( to_stdstring( str ) );
+    return index;
 }
 
 void sstring_table::join( sstring str )
@@ -44,7 +45,7 @@ int sstring_table::del( sstring str )
         }
         else
         {
-        	return -1;
+            return -1;
         }
     }
     else

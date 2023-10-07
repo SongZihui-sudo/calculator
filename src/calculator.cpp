@@ -2,7 +2,6 @@
 #include "global.h"
 #include "sstring.h"
 #include "type.h"
-#include <bits/types/struct_tm.h>
 #include <cctype>
 #include <clocale>
 #include <cstddef>
